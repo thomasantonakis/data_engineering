@@ -1,0 +1,51 @@
+# this is the runner file
+
+# Find how to set working directory to home directory
+# so that we only use relative (and short) paths
+
+# we need to set some oprions on the system
+# source('~/options.R')
+
+# First we need to authenticate
+# So, something like 
+# source('~/keys/authentication.R')
+
+# we need to load the libraries needed for the below analysis
+# source('~/libraries.R')
+
+# The analytics script must run
+# the script must recognize the current date
+# We need to identify the old data
+# how long has it been since the last update?
+# If if is null, then setup a batch historic download
+# if not, fetch the missing days.
+# automate so that the missing dates are a day at most
+# find the most cost effective solution between GCS and BQ
+# source('~/analytics.R')
+
+# adwords script must run
+# same logic as ith analytics
+# keep an eye on the conversion window
+# always rewrite the last 28 days (30)
+# we need to fetch the labels of the campaigns
+# We need to fetch the adgroup or ad api
+# and then the performance report from API.
+# find the most cost effective solution between GCS and BQ
+# source('~/adwords.R')
+
+# search console data
+# let's use the connector of Data Studio for starters and then we go custom
+
+# Search terms data from adwords
+
+# Search terms data from search console
+
+# the maps need to be fetched from a google spreadsheet
+# This needs to be automatic
+# source('~/mapping_transformations.R')
+
+# Create some scripts that will write the final tables in BQ
+
+# Create Dashboards in Data Studio pointing to the BQ tables
+
+# find a way to automate the whole process
