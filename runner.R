@@ -3,25 +3,24 @@
 # Find how to set working directory to home directory
 # so that we only use relative (and short) paths
 
+# we need to load the libraries needed for the below analysis
+source('./libraries.R')
+
 # we need to set some oprions on the system
-# source('~/options.R')
+source('./options.R')
 
 # First we need to authenticate
 # So, something like 
-# source('~/keys/authentication.R')
+source('./keys/authentication.R')
 
-# we need to load the libraries needed for the below analysis
-# source('~/libraries.R')
+
+# Set something up that will show if everything went OK
+# Run dummy query in BQ
+# get yesterday's sessions
+
 
 # The analytics script must run
-# the script must recognize the current date
-# We need to identify the old data
-# how long has it been since the last update?
-# If if is null, then setup a batch historic download
-# if not, fetch the missing days.
-# automate so that the missing dates are a day at most
-# find the most cost effective solution between GCS and BQ
-# source('~/analytics.R')
+source('./analytics.R')
 
 # adwords script must run
 # same logic as ith analytics
