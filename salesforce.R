@@ -16,6 +16,8 @@ for (i in 1:length(files)) {
 # we need to understand what is going on and how the files are connected
 # https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/sforce_api_erd_majors.htm
 
+
+
 # end of file
 # Set working directory to project directory
 setwd("D:/R Projects/my-body-moon")

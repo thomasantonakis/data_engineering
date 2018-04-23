@@ -64,4 +64,3 @@ from [my-body-moon:maps.landing]
 "
 # Fetch query result and store in dataframe
 map<-query_exec(query = sql, project = project, max_pages = Inf, use_legacy_sql = TRUE)
-
