@@ -10,6 +10,7 @@ scope<-c(
   "https://www.googleapis.com/auth/analytics.readonly",
   "https://www.googleapis.com/auth/devstorage.full_control",
   "https://www.googleapis.com/auth/cloud-platform",
+  "https://www.googleapis.com/auth/cloud-platform.readonly",
   "https://www.googleapis.com/auth/bigquery",
   "https://www.googleapis.com/auth/bigquery.insertdata",
   "https://www.googleapis.com/auth/drive",
