@@ -11,3 +11,6 @@ library(searchConsoleR)
 
 # load library for communication with BigQuery
 library(bigrquery)
+
+# load library for Google Drive authentication
+library(googledrive)
