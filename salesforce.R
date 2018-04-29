@@ -62,8 +62,10 @@ salesforce$surgery_date<-as.Date(salesforce$surgery_date)
 salesforce$Date_d_intervention__c<-NULL;salesforce$Date_d_arriv_e__c<-NULL
 # Calculate differences
 salesforce$days_to_convert<-salesforce$ConvertedDate - salesforce$CreatedDate
+salesforce$days_to_convert[salesforce$IsConverted < 1]<-NA
 salesforce$conv_to_surg<-salesforce$surgery_date - salesforce$ConvertedDate
-
+salesforce$conv_to_surg[salesforce$IsConverted < 1]<-NA
+salesforce$conv_to_surg[salesforce$surgery_date =='1970-01-01']<-NA
 
 # Actions per lead missing
 
@@ -78,7 +80,7 @@ move_to_bq<-'bq load --skip_leading_rows=1  --replace=true --source_format=CSV -
 system(move_to_bq)
 
 sql<-"
-  SELECT id, LeadSource, status, IsConverted, ConvertedDate, CreatedDate, prix, pays, surgeryDate, days_to_convert, conv_to_surg 
+  SELECT id, LeadSource, status, IsConverted, ConvertedDate, CreatedDate, prix, country, surgeryDate, days_to_convert, conv_to_surg 
 FROM [my-body-moon:initial.salesforce] 
 
 "
