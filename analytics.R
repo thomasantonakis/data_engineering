@@ -21,14 +21,14 @@ sql<-"
 dates<-query_exec(query = sql, project = project, max_pages = Inf, use_legacy_sql = TRUE)
 
 # Check if earliest day is '2015-05-29' and construct the date range
-if(dates$min=='2015-05-29'){
+if(dates$min<'2017-01-01'){
   d_r <- c(dates$max+1, today-1)
   } else {
-  d_r<-  c(dates$min, today-1)
+  d_r<-  c(as.Date('2015-05-29'), today-1)
   }
 
 # Execute the queryto get the above date range analytics data
-query_4_analytics<-google_analytics(ga_id, 
+query_4_analytics<-google_analytics_4(ga_id, 
                                        date_range = d_r,
                                        dimensions=c('date','deviceCategory', 'ga:landingPagePath', "ga:sourceMedium", 'ga:campaign', 'country'), 
                                        metrics = c('sessions', 'bounces', 'pageViews', 'goal1Completions', 'goal2Completions',
@@ -42,25 +42,70 @@ query_4_analytics<-google_analytics(ga_id,
                                     )
 
 # Save the result in a csv
-if(file.exists('./files/analytics.csv')) file.remove('./files/analytics.csv')
-write.csv(x = query_4_analytics, './files/analytics.csv', row.names = F)
+if(file.exists('./files/analytics.csv')){
+      file.remove('./files/analytics.csv')
+      write.csv(x = query_4_analytics, './files/analytics.csv', row.names = F)
+      }
 
 # Upload to the initial data set in BigQuery by appending
-if(dates$min=='2015-05-29'){
-  move_to_bq<-'bq load --skip_leading_rows=1  --replace=true --source_format=CSV --null_marker="NA" initial.analytics ./files/analytics.csv date:date,deviceCategory:string,landingPagePath:string,sourceMedium:string,campaign:string,country:string,sessions:integer,bounces:integer,pageViews:integer,goal1Completions:integer,goal2Completions:integer,goal3Completions:integer,goal4Completions:integer,goal5Completions:integer'
-} else {
+if(dates$min<'2017-01-01'){
   move_to_bq<-'bq load --skip_leading_rows=1  --replace=false --source_format=CSV --null_marker="NA" initial.analytics ./files/analytics.csv date:date,deviceCategory:string,landingPagePath:string,sourceMedium:string,campaign:string,country:string,sessions:integer,bounces:integer,pageViews:integer,goal1Completions:integer,goal2Completions:integer,goal3Completions:integer,goal4Completions:integer,goal5Completions:integer'
+} else {
+  move_to_bq<-'bq load --skip_leading_rows=1  --replace=true --source_format=CSV --null_marker="NA" initial.analytics ./files/analytics.csv date:date,deviceCategory:string,landingPagePath:string,sourceMedium:string,campaign:string,country:string,sessions:integer,bounces:integer,pageViews:integer,goal1Completions:integer,goal2Completions:integer,goal3Completions:integer,goal4Completions:integer,goal5Completions:integer'
 }
 system(move_to_bq)
 # Check if it went right
 # delete the csv
-if(file.exists('./files/analytics.csv')) file.remove('./files/analytics.csv')
+# if(file.exists('./files/analytics.csv')) file.remove('./files/analytics.csv')
 
-# Save a mapped table in the data_sources data set 
-# query initial.analytics and join with mapping.landng
+## Authentication is needed for service acccount
+## Save a mapped table in the data_sources data set 
+## query initial.analytics and join with mapping.landing
+# sql<-"
+#       Select * from [my-body-moon:maps.landing] limit 100
+# "
+# # Fetch query result and store in dataframe
+# map<-query_exec(query = sql, project = project, max_pages = Inf, use_legacy_sql = TRUE)
+
+# User googleDrive to access the maps
+# DOwnload them locally
+# Upload them in BQ as the analytics dataframe
+# Perform the manipulation in BQ
+maps<-drive_ls()
+landing<-maps$id[maps$name == 'Landing Page Mapping']
+drive_download(as_id(landing), path = './files/landing.csv', overwrite = TRUE)
+
+terms<-maps$id[maps$name == 'SearchTerm Mapping']
+drive_download(as_id(terms), path = './files/terms.csv', overwrite = TRUE)
+
+adwords<-maps$id[maps$name == 'Adwords Lookup']
+drive_download(as_id(adwords), path = './files/adwords.csv', overwrite = TRUE)
+
+move_to_bq<-'bq load --skip_leading_rows=1  --replace=true --source_format=CSV --null_marker="NA" initial.landing ./files/landing.csv landing_page:string,lp_group:string,context_1:string,context2:string,context3:string,sessions:integer'
+system(move_to_bq)
+
+move_to_bq<-'bq load --skip_leading_rows=1  --replace=true --source_format=CSV --null_marker="NA" initial.adwords ./files/adwords.csv campaign:string,ad_group:string,label1:string,label2:string'
+system(move_to_bq)
+
+move_to_bq<-'bq load --skip_leading_rows=1  --replace=true --source_format=CSV --null_marker="NA" initial.terms ./files/terms.csv keyword:string,impressions:string,treatment:string,brand:string,dhi:string,maxigreffe:string,operation:string,chirurgie:string,grefef:string,capillaire:string,implant:string,femme:string,clinique:string,cheveux:string,fue:string,location:string,cout:string,context:string,cher:string,barbe:string'
+system(move_to_bq)
+
 sql<-"
-      Select *
-from [my-body-moon:maps.landing]
+  SELECT a.date as date, a.deviceCategory as deviceCategory, 
+        a.landingPagePath as landingPagePath, a.sourceMedium as sourceMedium,
+        a.campaign as campaign, a.country as country, a.sessions as sessions, 
+        a.bounces as bounces, a.pageViews as pageViews, 
+        a.goal1Completions as goal1Completions,
+        a.goal2Completions as goal2Completions, 
+        a.goal3Completions as goal3Completions, 
+        a.goal4Completions as goal4Completions, 
+        a.goal5Completions as goal5Completions, 
+        b.lp_group as landing_group,
+        b.context_1 as context1,
+        b.context2 as context_2,
+        b.context3 as context_3
+  from [my-body-moon:initial.analytics] a
+  LEFT JOIN [my-body-moon:initial.landing] b
+  on a.landingPagePath = b.landing_page
 "
-# Fetch query result and store in dataframe
-map<-query_exec(query = sql, project = project, max_pages = Inf, use_legacy_sql = TRUE)
+wait_for(insert_query_job(query = sql, project = project, max_pages = Inf, use_legacy_sql = TRUE,destination_table = 'initial.mapped_analytics' , write_disposition = 'WRITE_TRUNCATE'))
