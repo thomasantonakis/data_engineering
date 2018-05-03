@@ -32,40 +32,30 @@ rm(list = names(empty)[empty])
 # Get the main file for leads from the feed
 salesforce<- Lead.csv
 # place here the names of columns to keep
-cols_to_keep<- names(salesforce) %in% c("Id", "LeadSource", "Status",
-                                        "IsConverted", "ConvertedDate", "ConvertedAccountId",
-                                        "CreatedDate", "LastModifiedDate", "LastActivityDate",
-                                        "InterventionSouhaitee__c", "Pays__c", "Prix__c",
-                                        "Date_d_arriv_e__c", "Date_d_intervention__c", "Hotel__c") 
+cols_to_keep<- names(salesforce) %in% c("Id", "LeadSource", "Status", "ConvertedAccountId",
+                                        "CreatedDate","InterventionSouhaitee__c", "Prix__c",
+                                        "Date_d_arriv_e__c", "Date_d_intervention__c", "Pays__c") 
 # Keep only those columns
 salesforce <- salesforce[cols_to_keep]
 # Clean up the file
 # Dates as dates and not characters
 
-# Fix Conversion date
-salesforce$ConvertedDate<- ifelse (salesforce$IsConverted > 0, salesforce$ConvertedDate, "1970-01-01 00:00:00")
-salesforce$ConvertedDate<-as.Date(salesforce$ConvertedDate)
+
 # Fix creation and last modif date
 salesforce$CreatedDate<-as.Date(salesforce$CreatedDate)
-salesforce$LastModifiedDate<-as.Date(salesforce$LastModifiedDate)
-# Fix Last activity date
-salesforce$LastActivityDate<- ifelse (salesforce$LastActivityDate!='', salesforce$LastActivityDate, "1970-01-01 00:00:00")
-salesforce$LastActivityDate<-as.Date(salesforce$LastActivityDate)
-# Fix Arrival date
-salesforce$arrival_date<- ifelse (salesforce$Date_d_arriv_e__c!='', salesforce$Date_d_arriv_e__c, "1970-01-01 00:00:00")
-salesforce$arrival_date<-as.Date(salesforce$arrival_date)
 # Fix Surgery date
+salesforce$surgery<-ifelse (salesforce$Date_d_intervention__c!='', TRUE , FALSE )
 salesforce$surgery_date<- ifelse (salesforce$Date_d_intervention__c!='', salesforce$Date_d_intervention__c, "1970-01-01 00:00:00")
 salesforce$surgery_date<-as.Date(salesforce$surgery_date)
 
 # Drop Unneeded columns
 salesforce$Date_d_intervention__c<-NULL;salesforce$Date_d_arriv_e__c<-NULL
 # Calculate differences
-salesforce$days_to_convert<-salesforce$ConvertedDate - salesforce$CreatedDate
-salesforce$days_to_convert[salesforce$IsConverted < 1]<-NA
-salesforce$conv_to_surg<-salesforce$surgery_date - salesforce$ConvertedDate
-salesforce$conv_to_surg[salesforce$IsConverted < 1]<-NA
-salesforce$conv_to_surg[salesforce$surgery_date =='1970-01-01']<-NA
+# salesforce$days_to_convert<-salesforce$ConvertedDate - salesforce$CreatedDate
+# salesforce$days_to_convert[salesforce$IsConverted < 1]<-NA
+# salesforce$conv_to_surg<-salesforce$surgery_date - salesforce$ConvertedDate
+# salesforce$conv_to_surg[salesforce$IsConverted < 1]<-NA
+# salesforce$conv_to_surg[salesforce$surgery_date =='1970-01-01']<-NA
 
 # Actions per lead missing
 
@@ -76,11 +66,11 @@ if(file.exists('./files/salesforce.csv')){
 write.csv(x = salesforce, './files/salesforce.csv', row.names = F)
 
 # Move to BQ
-move_to_bq<-'bq load --skip_leading_rows=1  --replace=true --source_format=CSV --null_marker="NA" initial.salesforce ./files/salesforce.csv id:string,LeadSource:string,status:string,IsConverted:boolean,ConvertedDate:date,ConvertedAccountID:string,CreatedDate:date,lastModifiedDate:date,LastActivityDate:date,InterventionSouhete:string,prix:float,country:string,hotel:string,arrivalDate:date,surgeryDate:date,days_to_convert:float,conv_to_surg:float'
+move_to_bq<-'bq load --skip_leading_rows=1  --replace=true --source_format=CSV --null_marker="NA" initial.salesforce ./files/salesforce.csv id:string,LeadSource:string,status:string,ConvertedAccountID:string,CreatedDate:date,InterventionSouhete:string,prix:float,country:string,surgery:boolean,surgeryDate:date'
 system(move_to_bq)
 
 sql<-"
-  SELECT id, LeadSource, status, IsConverted, ConvertedDate, CreatedDate, prix, country, surgeryDate, days_to_convert, conv_to_surg 
+  SELECT id,LeadSource,status,ConvertedAccountID,CreatedDate,InterventionSouhete,prix,country,surgery,surgeryDate
 FROM [my-body-moon:initial.salesforce] 
 
 "
