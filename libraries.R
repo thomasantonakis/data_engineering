@@ -14,3 +14,6 @@ library(bigrquery)
 
 # load library for Google Drive authentication
 library(googledrive)
+
+# load library that will help us with manipulation
+library(sqldf)
