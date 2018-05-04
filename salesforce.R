@@ -29,6 +29,27 @@ rm(list = names(empty)[empty])
 # we need to understand what is going on and how the files are connected
 # https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/sforce_api_erd_majors.htm
 
+
+###############################
+#############Test##################
+###############################
+query<-"select l.id , a.ID, l.FirstName, l.LastName, a.Name, l.LeadSource, l.ConvertedAccountID, 
+                        l.InterventionSouhaitee__c, l.Prix__c, l.Pays__c,
+                        l.IsConverted, date(l.CreatedDate) as leadCreateDate,  
+                        date(l.ConvertedDate) as leadConvDate,   date(a.CreatedDate) as AccCreateDate,
+                        date(l.Date_d_intervention__c) as leadOperDate, date(l.DateDemande__c) as leadQueryDate,
+                        date(a.Date_d_intervention_compte__c) as AccdontKnow, l.status
+        from `Lead.csv` as l
+        LEFT JOIN `Account.csv` as a
+        ON l.ConvertedAccountId = a.Id
+"
+thomas<-sqldf(query)
+write.csv(x = thomas, file = './filesthomsa.csv')
+###############################
+
+
+
+
 # Get the main file for leads from the feed
 salesforce<- Lead.csv
 # place here the names of columns to keep
