@@ -22,6 +22,10 @@ source('./keys/authentication.R')
 # The analytics script must run
 source('./analytics.R')
 
+# Salesforce Data Need to be retrieved
+# After having retrieved the data, this file must be executed in order to update the Salesforce Dashboard
+source('./salesforce.R')
+
 # adwords script must run
 # same logic as ith analytics
 # keep an eye on the conversion window
@@ -38,10 +42,6 @@ source('./analytics.R')
 # Search terms data from adwords
 
 # Search terms data from search console
-
-# the maps need to be fetched from a google spreadsheet
-# This needs to be automatic
-# source('~/mapping_transformations.R')
 
 # Create some scripts that will write the final tables in BQ
 
