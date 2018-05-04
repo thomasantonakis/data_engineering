@@ -58,38 +58,41 @@ system(move_to_bq)
 # delete the csv
 # if(file.exists('./files/analytics.csv')) file.remove('./files/analytics.csv')
 
-## Authentication is needed for service acccount
-## Save a mapped table in the data_sources data set 
-## query initial.analytics and join with mapping.landing
-# sql<-"
-#       Select * from [my-body-moon:maps.landing] limit 100
-# "
-# # Fetch query result and store in dataframe
-# map<-query_exec(query = sql, project = project, max_pages = Inf, use_legacy_sql = TRUE)
-
-# User googleDrive to access the maps
-# DOwnload them locally
-# Upload them in BQ as the analytics dataframe
-# Perform the manipulation in BQ
+# Get the maps from Google Drive
+# This lists all files that the service acccount hass access to
 maps<-drive_ls()
+# Landing ID
 landing<-maps$id[maps$name == 'Landing Page Mapping']
+# DOwnload the damn file
 drive_download(as_id(landing), path = './files/landing.csv', overwrite = TRUE)
 
+# Search Terms ID
 terms<-maps$id[maps$name == 'SearchTerm Mapping']
+# DOwnload the damn file
 drive_download(as_id(terms), path = './files/terms.csv', overwrite = TRUE)
 
+# Adwords ID
 adwords<-maps$id[maps$name == 'Adwords Lookup']
+# DOwnload the damn file
 drive_download(as_id(adwords), path = './files/adwords.csv', overwrite = TRUE)
 
+# Command for upload to BQ
 move_to_bq<-'bq load --skip_leading_rows=1  --replace=true --source_format=CSV --null_marker="NA" initial.landing ./files/landing.csv landing_page:string,lp_group:string,context_1:string,context2:string,context3:string,sessions:integer'
+# Execute command
 system(move_to_bq)
 
+# Command for upload to BQ
 move_to_bq<-'bq load --skip_leading_rows=1  --replace=true --source_format=CSV --null_marker="NA" initial.adwords ./files/adwords.csv campaign:string,ad_group:string,label1:string,label2:string'
+# Execute command
 system(move_to_bq)
 
+# Command for upload to BQ
 move_to_bq<-'bq load --skip_leading_rows=1  --replace=true --source_format=CSV --null_marker="NA" initial.terms ./files/terms.csv keyword:string,impressions:string,treatment:string,brand:string,dhi:string,maxigreffe:string,operation:string,chirurgie:string,grefef:string,capillaire:string,implant:string,femme:string,clinique:string,cheveux:string,fue:string,location:string,cout:string,context:string,cher:string,barbe:string'
+# Execute command
 system(move_to_bq)
 
+# Overwrite the analytics ttable but this time having the mappings of landing pages
+# Write the query
 sql<-"
   SELECT a.date as date, a.deviceCategory as deviceCategory, 
         a.landingPagePath as landingPagePath, a.sourceMedium as sourceMedium,
@@ -108,4 +111,5 @@ sql<-"
   LEFT JOIN [my-body-moon:initial.landing] b
   on a.landingPagePath = b.landing_page
 "
+# Execute job
 wait_for(insert_query_job(query = sql, project = project, max_pages = Inf, use_legacy_sql = TRUE,destination_table = 'initial.mapped_analytics' , write_disposition = 'WRITE_TRUNCATE'))
