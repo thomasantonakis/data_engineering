@@ -1,7 +1,8 @@
 # options file
 
 # Set working directory to project directory
-setwd("D:/R Projects/my-body-moon")
+# setwd("D:/R Projects/my-body-moon")
+setwd("C:/Users/BI/R Projects/my-body-moon")
 
 # Set scope item to contain a vector of scopes in strings
 scope<-c(
