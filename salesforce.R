@@ -1,11 +1,20 @@
 # the files are here
 extract_directory<-'./files/salesforce'
+
+# Add logic to find the latest ZIP file
+# Add logic to check if files exist 
+# Modification Dates maybe
+## With a vector of multiple paths
+paths <- dir(extract_directory, full.names=TRUE)
+mt<-max(file.info(paths)$mtime)
+
+zipmt<-file.info('./files/WE_00D0Y000001kRXSUA2_1.zip')$mtime
 # Unzip the ZIP
 unzip(zipfile = './files/WE_00D0Y000001kRXSUA2_1.zip',exdir = extract_directory)
 # list files in folders
 files<-list.files(path = extract_directory, all.files=FALSE,
            full.names=FALSE)
-# Change the working directory so that the load is quicker
+# Change the working directory so that we do not have to specify te path every time :)
 setwd(extract_directory)
 # Load files
 for (i in 1:length(files)) {
@@ -33,35 +42,25 @@ rm(list = names(empty)[empty])
 ###############################
 #############Test##################
 ###############################
-query<-"select l.id , a.ID, l.FirstName, l.LastName, a.Name, l.LeadSource, l.ConvertedAccountID, 
+query<-"select l.id , a.ID, l.FirstName, l.LastName, a.Name, l.LeadSource, l.status, l.ConvertedAccountID, 
                         l.InterventionSouhaitee__c, l.Prix__c, l.Pays__c,
                         l.IsConverted, date(l.CreatedDate) as leadCreateDate,  
                         date(l.ConvertedDate) as leadConvDate,   date(a.CreatedDate) as AccCreateDate,
                         date(l.Date_d_intervention__c) as leadOperDate, date(l.DateDemande__c) as leadQueryDate,
-                        date(a.Date_d_intervention_compte__c) as AccdontKnow, l.status
+                        date(a.Date_d_intervention_compte__c) as AccdontKnow 
         from `Lead.csv` as l
         LEFT JOIN `Account.csv` as a
         ON l.ConvertedAccountId = a.Id
 "
-thomas<-sqldf(query)
-write.csv(x = thomas, file = './filesthomsa.csv')
+salesforce<-sqldf(query)
+write.csv(x = salesforce, file = './files/salesforce.csv',row.names = F)
 ###############################
 
 
 
 
-# Get the main file for leads from the feed
-salesforce<- Lead.csv
-# place here the names of columns to keep
-cols_to_keep<- names(salesforce) %in% c("Id", "LeadSource", "Status", "ConvertedAccountId",
-                                        "CreatedDate","InterventionSouhaitee__c", "Prix__c",
-                                        "Date_d_arriv_e__c", "Date_d_intervention__c", "Pays__c") 
-# Keep only those columns
-salesforce <- salesforce[cols_to_keep]
 # Clean up the file
 # Dates as dates and not characters
-
-
 # Fix creation and last modif date
 salesforce$CreatedDate<-as.Date(salesforce$CreatedDate)
 # Fix Surgery date
@@ -87,12 +86,18 @@ if(file.exists('./files/salesforce.csv')){
 write.csv(x = salesforce, './files/salesforce.csv', row.names = F)
 
 # Move to BQ
+# THis needs to be updated
+#pload to BQ
 move_to_bq<-'bq load --skip_leading_rows=1  --replace=true --source_format=CSV --null_marker="NA" initial.salesforce ./files/salesforce.csv id:string,LeadSource:string,status:string,ConvertedAccountID:string,CreatedDate:date,InterventionSouhete:string,prix:float,country:string,surgery:boolean,surgeryDate:date'
+# Execute the command
 system(move_to_bq)
 
-sql<-"
-  SELECT id,LeadSource,status,ConvertedAccountID,CreatedDate,InterventionSouhete,prix,country,surgery,surgeryDate
-FROM [my-body-moon:initial.salesforce] 
 
-"
-wait_for(insert_query_job(query = sql, project = project, max_pages = Inf, use_legacy_sql = TRUE,destination_table = 'initial.salesforce' , write_disposition = 'WRITE_TRUNCATE'))
+# # This is unnecessary because we do not do anything else
+# # THis needs to be updated
+# sql<-"
+#   SELECT id,LeadSource,status,ConvertedAccountID,CreatedDate,InterventionSouhete,prix,country,surgery,surgeryDate
+# FROM [my-body-moon:initial.salesforce] 
+# 
+# "
+# wait_for(insert_query_job(query = sql, project = project, max_pages = Inf, use_legacy_sql = TRUE,destination_table = 'initial.salesforce' , write_disposition = 'WRITE_TRUNCATE'))
