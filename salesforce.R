@@ -23,7 +23,8 @@ for (i in 1:length(files)) {
 
 # end of file
 # Set working directory to project directory
-setwd("D:/R Projects/my-body-moon")
+# setwd("D:/R Projects/my-body-moon")
+setwd("C:/Users/BI/R Projects/my-body-moon")
 
 # Clean up empty Dataframes
 ## create a function that returns a logical value
