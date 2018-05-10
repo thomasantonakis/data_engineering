@@ -43,18 +43,21 @@ rm(list = names(empty)[empty])
 ###############################
 #############Test##################
 ###############################
-query<-"select l.id , a.ID, l.FirstName, l.LastName, a.Name, l.LeadSource, l.status, l.ConvertedAccountID, 
+query<-"select l.id as leadID , a.ID as accountID, l.FirstName, l.LastName, a.Name, l.LeadSource, l.status, l.ConvertedAccountID, 
                         l.InterventionSouhaitee__c, l.Prix__c, l.Pays__c,
-                        l.IsConverted, date(l.CreatedDate) as leadCreateDate,  
-                        date(l.ConvertedDate) as leadConvDate,   date(a.CreatedDate) as AccCreateDate,
-                        date(l.Date_d_intervention__c) as leadOperDate, date(l.DateDemande__c) as leadQueryDate,
+                        l.IsConverted, 
+                        date(l.CreatedDate) as leadCreateDate,  
+                        date(l.ConvertedDate) as leadConvDate,   
+                        date(a.CreatedDate) as AccCreateDate,
+                        date(l.Date_d_intervention__c) as leadOperDate, 
+                        date(l.DateDemande__c) as leadQueryDate,
                         date(a.Date_d_intervention_compte__c) as AccdontKnow 
         from `Lead.csv` as l
         LEFT JOIN `Account.csv` as a
         ON l.ConvertedAccountId = a.Id
 "
 salesforce<-sqldf(query)
-write.csv(x = salesforce, file = './files/salesforce.csv',row.names = F)
+# write.csv(x = salesforce, file = './files/salesforce.csv',row.names = F)
 ###############################
 
 
@@ -63,20 +66,38 @@ write.csv(x = salesforce, file = './files/salesforce.csv',row.names = F)
 # Clean up the file
 # Dates as dates and not characters
 # Fix creation and last modif date
-salesforce$CreatedDate<-as.Date(salesforce$CreatedDate)
-# Fix Surgery date
-salesforce$surgery<-ifelse (salesforce$Date_d_intervention__c!='', TRUE , FALSE )
-salesforce$surgery_date<- ifelse (salesforce$Date_d_intervention__c!='', salesforce$Date_d_intervention__c, "1970-01-01 00:00:00")
-salesforce$surgery_date<-as.Date(salesforce$surgery_date)
+salesforce$leadCreateDate<-as.Date(salesforce$leadCreateDate)
 
-# Drop Unneeded columns
-salesforce$Date_d_intervention__c<-NULL;salesforce$Date_d_arriv_e__c<-NULL
+# Fix Lead COnversion Date
+salesforce$leadConvDate<-as.Date(salesforce$leadConvDate)
+
+# Fix Account COnversion Date
+salesforce$AccCreateDate<-as.Date(salesforce$AccCreateDate)
+
+# Fix Surgery date
+salesforce$leadOperDate<-as.Date(salesforce$leadOperDate)
+
+# Fix Query date
+salesforce$leadQueryDate<-as.Date(salesforce$leadQueryDate)
+
+# Fix Unknown date
+salesforce$AccdontKnow<-as.Date(salesforce$AccdontKnow)
+
+# Find implausible rows
+salesforce$is_plausible <- (( salesforce$leadConvDate >= salesforce$leadCreateDate ) &
+                           ( salesforce$leadOperDate >= salesforce$leadCreateDate ) &
+                           ( salesforce$leadOperDate >= salesforce$leadConvDate)) | salesforce$leadConvDate == '1970-01-01'
+# If it is not plausible, check if it one of the bulk conversions of October, and turn to plausible.
+salesforce$final <- salesforce$leadConvDate <= '2017-10-15' | salesforce$is_plausible
+
+# Check the final implausibilities
+# table(salesforce$final)
+
+# We maybe should get provide pecial feeedback on those 34 cases so that they are corrected manually
+
+
 # Calculate differences
-# salesforce$days_to_convert<-salesforce$ConvertedDate - salesforce$CreatedDate
-# salesforce$days_to_convert[salesforce$IsConverted < 1]<-NA
-# salesforce$conv_to_surg<-salesforce$surgery_date - salesforce$ConvertedDate
-# salesforce$conv_to_surg[salesforce$IsConverted < 1]<-NA
-# salesforce$conv_to_surg[salesforce$surgery_date =='1970-01-01']<-NA
+
 
 # Actions per lead missing
 
@@ -86,10 +107,8 @@ if(file.exists('./files/salesforce.csv')){
   file.remove('./files/salesforce.csv')}
 write.csv(x = salesforce, './files/salesforce.csv', row.names = F)
 
-# Move to BQ
-# THis needs to be updated
-#pload to BQ
-move_to_bq<-'bq load --skip_leading_rows=1  --replace=true --source_format=CSV --null_marker="NA" initial.salesforce ./files/salesforce.csv id:string,LeadSource:string,status:string,ConvertedAccountID:string,CreatedDate:date,InterventionSouhete:string,prix:float,country:string,surgery:boolean,surgeryDate:date'
+# Upload to BQ
+move_to_bq<-'bq load --skip_leading_rows=1  --replace=true --source_format=CSV --null_marker="NA" initial.salesforce ./files/salesforce.csv leadID:string,accountID:string,FirstName:string,LastName:string,Name:string,LeadSource:string,status:string,convertedAccountID:string,desiredOperation:string,price:float,country:string,isCOnverted:integer,leadCreateDate:date,leadConvDate:date,accCreateDate:date,leadOperDate:date,leadQueryDate:date,AccIDNDate:date,is_plausible:boolean,final:boolean'
 # Execute the command
 system(move_to_bq)
 
