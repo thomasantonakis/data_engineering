@@ -17,3 +17,6 @@ library(googledrive)
 
 # load library that will help us with manipulation
 library(sqldf)
+
+# Load read R because I dont know
+library(readr)
