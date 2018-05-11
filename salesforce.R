@@ -51,7 +51,11 @@ query<-"select l.id as leadID , a.ID as accountID, l.FirstName, l.LastName, a.Na
                         date(a.CreatedDate) as AccCreateDate,
                         date(l.Date_d_intervention__c) as leadOperDate, 
                         date(l.DateDemande__c) as leadQueryDate,
-                        date(a.Date_d_intervention_compte__c) as AccdontKnow 
+                        date(a.Date_d_intervention_compte__c) as AccdontKnow,
+                        case when date(l.CreatedDate) is not null then 1 else 0 end as is_lead,
+                        case when date(l.ConvertedDate) is not null then 1 else 0 end as has_conv_dt,
+                        case when date(a.CreatedDate) is not null then 1 else 0 end as has_acc_create_dt,
+                        case when date(l.Date_d_intervention__c) is not null then 1 else 0 end as has_oper_dt
         from `Lead.csv` as l
         LEFT JOIN `Account.csv` as a
         ON l.ConvertedAccountId = a.Id
@@ -108,7 +112,7 @@ if(file.exists('./files/salesforce.csv')){
 write.csv(x = salesforce, './files/salesforce.csv', row.names = F)
 
 # Upload to BQ
-move_to_bq<-'bq load --skip_leading_rows=1  --replace=true --source_format=CSV --null_marker="NA" initial.salesforce ./files/salesforce.csv leadID:string,accountID:string,FirstName:string,LastName:string,Name:string,LeadSource:string,status:string,convertedAccountID:string,desiredOperation:string,price:float,country:string,isCOnverted:integer,leadCreateDate:date,leadConvDate:date,accCreateDate:date,leadOperDate:date,leadQueryDate:date,AccIDNDate:date,is_plausible:boolean,final:boolean'
+move_to_bq<-'bq load --skip_leading_rows=1  --replace=true --source_format=CSV --null_marker="NA" initial.salesforce ./files/salesforce.csv leadID:string,accountID:string,FirstName:string,LastName:string,Name:string,LeadSource:string,status:string,convertedAccountID:string,desiredOperation:string,price:float,country:string,isCOnverted:integer,leadCreateDate:date,leadConvDate:date,accCreateDate:date,leadOperDate:date,leadQueryDate:date,AccIDNDate:date,is_lead:integer,has_conv_dt:integer,has_acc_create_dt:integer,has_oper_dt:integer,is_plausible:boolean,final:boolean'
 # Execute the command
 system(move_to_bq)
 
