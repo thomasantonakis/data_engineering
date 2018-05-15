@@ -2,15 +2,16 @@
 extract_directory<-'./files/salesforce'
 
 # Add logic to find the latest ZIP file
-# Add logic to check if files exist 
-# Modification Dates maybe
-## With a vector of multiple paths
+# Find the latest modification date of the files
 paths <- dir(extract_directory, full.names=TRUE)
 mt<-max(file.info(paths)$mtime)
+# insert Logic to detect the zip file
 
+# Find the modification date of the zip file
 zipmt<-file.info('./files/WE_00D0Y000001kRXSUA2_1.zip')$mtime
-# Unzip the ZIP
-unzip(zipfile = './files/WE_00D0Y000001kRXSUA2_1.zip',exdir = extract_directory)
+# If the Zip is newer than the files then Unzip the ZIP
+if (zipmt>mt){unzip(zipfile = './files/WE_00D0Y000001kRXSUA2_1.zip',exdir = extract_directory)}
+# We need to load all the files in the environment
 # list files in folders
 files<-list.files(path = extract_directory, all.files=FALSE,
            full.names=FALSE)
@@ -63,7 +64,11 @@ query<-"select l.id as leadID , a.ID as accountID, l.FirstName, l.LastName, a.Na
 salesforce<-sqldf(query)
 # write.csv(x = salesforce, file = './files/salesforce.csv',row.names = F)
 ###############################
-
+# Write a checker dataframe to check the correct movement of total metrics in the dashboard
+checker<-data.frame(leads = sum(salesforce$is_lead),
+                    conversions = sum(salesforce$has_oper_dt),
+                    price = sum(salesforce$Prix__c, na.rm = TRUE)
+                    )
 
 
 
@@ -88,19 +93,44 @@ salesforce$leadQueryDate<-as.Date(salesforce$leadQueryDate)
 salesforce$AccdontKnow<-as.Date(salesforce$AccdontKnow)
 
 # Find implausible rows
-salesforce$is_plausible <- (( salesforce$leadConvDate >= salesforce$leadCreateDate ) &
-                           ( salesforce$leadOperDate >= salesforce$leadCreateDate ) &
-                           ( salesforce$leadOperDate >= salesforce$leadConvDate)) | salesforce$leadConvDate == '1970-01-01'
+salesforce$is_plausible <- !(( salesforce$leadCreateDate > salesforce$leadOperDate ) |
+                           ( salesforce$leadCreateDate > salesforce$leadConvDate ) |
+                           ( salesforce$leadConvDate > salesforce$leadOperDate))
 # If it is not plausible, check if it one of the bulk conversions of October, and turn to plausible.
-salesforce$final <- salesforce$leadConvDate <= '2017-10-15' | salesforce$is_plausible
+salesforce$final <- salesforce$leadCreateDate <= '2017-10-15' | salesforce$is_plausible
 
 # Check the final implausibilities
-# table(salesforce$final)
-
 # We maybe should get provide pecial feeedback on those 34 cases so that they are corrected manually
+# implausible cases are listed in the second slide of the dashboard
 
+# Calculate legitimate days between operation and conversion
 
-# Calculate differences
+# Sanitize the country
+salesforce$Pays__c[salesforce$Pays__c == 'France' |
+                     salesforce$Pays__c == 'FRANCE'|
+                     salesforce$Pays__c == '30320 POULX'|
+                     salesforce$Pays__c == 'Fance' ]<- 'France'
+salesforce$Pays__c[salesforce$Pays__c == 'Belgique' |
+                     salesforce$Pays__c == 'BELGIQUE'|
+                     salesforce$Pays__c == 'Bruxelles'|
+                     salesforce$Pays__c == 'belgique' ]<- 'Belgium'
+salesforce$Pays__c[salesforce$Pays__c == 'Suisse'|
+                     salesforce$Pays__c == 'Switzerland'|
+                     salesforce$Pays__c == 'suisse' ]<- 'Switzerland'
+salesforce$Pays__c[salesforce$Pays__c == 'Algerie'|
+                     salesforce$Pays__c == 'Algιrie'|
+                     grepl('Alg', salesforce$Pays__c, ignore.case = FALSE, perl = FALSE,
+                           fixed = FALSE, useBytes = FALSE)]<- 'Algeria'
+salesforce$Pays__c[salesforce$Pays__c == 'US'|
+                     salesforce$Pays__c == 'Usa' ]<- 'USA'
+salesforce$Pays__c[salesforce$Pays__c == 'Angleterre'|
+                     salesforce$Pays__c == 'Londres' ]<- 'UK'
+salesforce$Pays__c[salesforce$Pays__c == 'djibouti'|
+                     salesforce$Pays__c == 'Djibouti' ]<- 'Djibouti'
+salesforce$Pays__c[salesforce$Pays__c == 'MAROC'|
+                     salesforce$Pays__c == 'Maroc' ]<- 'Morocco'
+salesforce$Pays__c[grepl('union', salesforce$Pays__c, ignore.case = FALSE, perl = FALSE,
+                         fixed = FALSE, useBytes = FALSE)]<- 'Ile de la Reunion'
 
 
 # Actions per lead missing
