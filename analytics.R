@@ -53,6 +53,8 @@ query_4_analytics$sourceMedium<-NULL
 query_4_analytics <- add_column(query_4_analytics, source = as.character(srcmed$source), .after = 3)
 # Add medium
 query_4_analytics <- add_column(query_4_analytics, medium = as.character(srcmed$medium), .after = 4)
+
+
 # Save the result in a csv
 if(file.exists('./files/analytics.csv')){
       file.remove('./files/analytics.csv')
@@ -103,6 +105,7 @@ system(move_to_bq)
 
 # Overwrite the analytics table but this time having the mappings of landing pages
 # Write the query
+# Create Custom Channel Grouping
 sql<-"
   SELECT a.date as date, a.deviceCategory as deviceCategory, 
         a.landingPagePath as landingPagePath, a.source as source, a.medium as medium,
@@ -116,7 +119,22 @@ sql<-"
         b.lp_group as landing_group,
         b.context_1 as context1,
         b.context2 as context_2,
-        b.context3 as context_3
+        b.context3 as context_3,
+        CASE WHEN a.source = 'direct' and (a.medium = '(not set)' OR a.medium = 'none') THEN 'Direct'
+              WHEN a.medium = 'organic' THEN 'Organic Search'
+              WHEN a.medium = 'social' THEN 'Social'
+-- social needs regex regex ^(social|social-network|social-media|sm|social network|social media|facebook)$
+-- https://support.google.com/analytics/answer/3297892?hl=en&ref_topic=6010089
+              WHEN a.medium = 'email' THEN 'email'
+              WHEN a.medium = 'affiliate' THEN 'affiliate'
+              WHEN a.medium = 'referral' THEN 'referral'
+              WHEN a.medium = 'cpc' THEN 'Paid Search'
+-- paid search needs regex ^(cpc|ppc|paidsearch)$
+              WHEN a.medium = 'ppc' THEN 'Other Advertizing'
+-- other advertizing needs regex ^(cpv|cpa|cpp|content-text)$
+              WHEN a.medium = 'display' THEN 'Display'
+-- display needs regex ^(display|cpm|banner)$
+        ELSE 'unknown' END as default_Channel_grouping
   from [my-body-moon:initial.analytics] a
   LEFT JOIN [my-body-moon:initial.landing] b
   on a.landingPagePath = b.landing_page
