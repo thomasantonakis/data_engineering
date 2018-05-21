@@ -19,6 +19,8 @@ sql<-"
 "
 # Fetch query result and store in dataframe
 dates<-query_exec(query = sql, project = project, max_pages = Inf, use_legacy_sql = TRUE)
+# Force recalc
+# dates <- data.frame( min= as.Date('2017-05-01'), max = as.Date('2017-06-01'))
 
 # Check if earliest day is '2015-05-29' and construct the date range
 if(dates$min<'2017-01-01'){
@@ -41,6 +43,16 @@ query_4_analytics<-google_analytics_4(ga_id,
                                     slow_fetch = TRUE
                                     )
 
+# Parse the source Medium column so that we fool the API and we gain one more dimension
+srcmed<-as.data.frame(str_split_fixed(query_4_analytics$sourceMedium, " / ", 2))
+# Fix names of parsed columns
+names(srcmed) <- c("source", "medium")
+# delete old combination
+query_4_analytics$sourceMedium<-NULL
+# Add source
+query_4_analytics <- add_column(query_4_analytics, source = as.character(srcmed$source), .after = 3)
+# Add medium
+query_4_analytics <- add_column(query_4_analytics, medium = as.character(srcmed$medium), .after = 4)
 # Save the result in a csv
 if(file.exists('./files/analytics.csv')){
       file.remove('./files/analytics.csv')
@@ -49,14 +61,12 @@ if(file.exists('./files/analytics.csv')){
 
 # Upload to the initial data set in BigQuery by appending
 if(dates$min<'2017-01-01'){
-  move_to_bq<-'bq load --skip_leading_rows=1  --replace=false --source_format=CSV --null_marker="NA" initial.analytics ./files/analytics.csv date:date,deviceCategory:string,landingPagePath:string,sourceMedium:string,campaign:string,country:string,sessions:integer,bounces:integer,pageViews:integer,goal1Completions:integer,goal2Completions:integer,goal3Completions:integer,goal4Completions:integer,goal5Completions:integer'
+  move_to_bq<-'bq load --skip_leading_rows=1  --replace=false --source_format=CSV --null_marker="NA" initial.analytics ./files/analytics.csv date:date,deviceCategory:string,landingPagePath:string,source:string,medium:string,campaign:string,country:string,sessions:integer,bounces:integer,pageViews:integer,goal1Completions:integer,goal2Completions:integer,goal3Completions:integer,goal4Completions:integer,goal5Completions:integer'
 } else {
-  move_to_bq<-'bq load --skip_leading_rows=1  --replace=true --source_format=CSV --null_marker="NA" initial.analytics ./files/analytics.csv date:date,deviceCategory:string,landingPagePath:string,sourceMedium:string,campaign:string,country:string,sessions:integer,bounces:integer,pageViews:integer,goal1Completions:integer,goal2Completions:integer,goal3Completions:integer,goal4Completions:integer,goal5Completions:integer'
+  move_to_bq<-'bq load --skip_leading_rows=1  --replace=true --source_format=CSV --null_marker="NA" initial.analytics ./files/analytics.csv date:date,deviceCategory:string,landingPagePath:string,source:string,medium:string,campaign:string,country:string,sessions:integer,bounces:integer,pageViews:integer,goal1Completions:integer,goal2Completions:integer,goal3Completions:integer,goal4Completions:integer,goal5Completions:integer'
 }
 system(move_to_bq)
 # Check if it went right
-# delete the csv
-# if(file.exists('./files/analytics.csv')) file.remove('./files/analytics.csv')
 
 # Get the maps from Google Drive
 # This lists all files that the service acccount hass access to
@@ -91,11 +101,11 @@ move_to_bq<-'bq load --skip_leading_rows=1  --replace=true --source_format=CSV -
 # Execute command
 system(move_to_bq)
 
-# Overwrite the analytics ttable but this time having the mappings of landing pages
+# Overwrite the analytics table but this time having the mappings of landing pages
 # Write the query
 sql<-"
   SELECT a.date as date, a.deviceCategory as deviceCategory, 
-        a.landingPagePath as landingPagePath, a.sourceMedium as sourceMedium,
+        a.landingPagePath as landingPagePath, a.source as source, a.medium as medium,
         a.campaign as campaign, a.country as country, a.sessions as sessions, 
         a.bounces as bounces, a.pageViews as pageViews, 
         a.goal1Completions as goal1Completions,
