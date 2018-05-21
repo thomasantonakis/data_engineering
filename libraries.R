@@ -20,3 +20,9 @@ library(sqldf)
 
 # Load read R because I dont know
 library(readr)
+
+#Load library for string manipulation
+library(stringr)
+
+# Load tibble for dataframe manipulation
+library(tibble)
