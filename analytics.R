@@ -120,20 +120,17 @@ sql<-"
         b.context_1 as context1,
         b.context2 as context_2,
         b.context3 as context_3,
-        CASE WHEN a.source = 'direct' and (a.medium = '(not set)' OR a.medium = 'none') THEN 'Direct'
+        CASE WHEN a.source = '(direct)' and (a.medium = '(not set)' OR a.medium = '(none)') THEN 'Direct'
               WHEN a.medium = 'organic' THEN 'Organic Search'
-              WHEN a.medium = 'social' THEN 'Social'
--- social needs regex regex ^(social|social-network|social-media|sm|social network|social media|facebook)$
--- https://support.google.com/analytics/answer/3297892?hl=en&ref_topic=6010089
+              WHEN regexp_match(a.medium, r'^(social|social-network|social-media|sm|social network|social media|facebook)$') OR regexp_match(a.source, r'^(social|social-network|social-media|sm|social network|social media|facebook)$') THEN 'Social'
+-- Facebook and Ad shoul maybe Paid Social
               WHEN a.medium = 'email' THEN 'email'
-              WHEN a.medium = 'affiliate' THEN 'affiliate'
-              WHEN a.medium = 'referral' THEN 'referral'
-              WHEN a.medium = 'cpc' THEN 'Paid Search'
--- paid search needs regex ^(cpc|ppc|paidsearch)$
+              WHEN a.medium = 'affiliate' THEN 'Affiliate'
+              WHEN a.medium = 'referral' THEN 'Referral'
+              WHEN regexp_match(a.medium, r'^(cpc|ppc|paidsearch)$') THEN 'Paid Search'
               WHEN a.medium = 'ppc' THEN 'Other Advertizing'
--- other advertizing needs regex ^(cpv|cpa|cpp|content-text)$
-              WHEN a.medium = 'display' THEN 'Display'
--- display needs regex ^(display|cpm|banner)$
+              WHEN regexp_match(a.medium, r'^(cpv|cpa|cpp|content-text)$') THEN 'Other Advertizing'
+              WHEN regexp_match(a.medium, r'^(display|cpm|banner)$') THEN 'Display'
         ELSE 'unknown' END as default_Channel_grouping
   from [my-body-moon:initial.analytics] a
   LEFT JOIN [my-body-moon:initial.landing] b
