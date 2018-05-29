@@ -55,7 +55,7 @@ query<-"select l.id as leadID , a.ID as accountID, l.FirstName, l.LastName, a.Na
                         date(a.Date_d_intervention_compte__c) as AccdontKnow,
                         case when date(l.CreatedDate) is not null then 1 else 0 end as is_lead,
                         case when date(l.ConvertedDate) is not null then 1 else 0 end as has_conv_dt,
-                        case when date(a.CreatedDate) is not null then 1 else 0 end as has_acc_create_dt,
+                        case when date(a.Date_d_intervention_compte__c) is not null then 1 else 0 end as has_acc_create_dt,
                         case when date(l.Date_d_intervention__c) is not null then 1 else 0 end as has_oper_dt
         from `Lead.csv` as l
         LEFT JOIN `Account.csv` as a

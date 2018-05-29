@@ -123,7 +123,7 @@ sql<-"
         CASE WHEN a.source = '(direct)' and (a.medium = '(not set)' OR a.medium = '(none)') THEN 'Direct'
               WHEN a.medium = 'organic' THEN 'Organic Search'
               WHEN regexp_match(a.medium, r'^(social|social-network|social-media|sm|social network|social media|facebook)$') OR regexp_match(a.source, r'^(social|social-network|social-media|sm|social network|social media|facebook)$') THEN 'Social'
--- Facebook and Ad shoul maybe Paid Social
+-- Facebook and Ad should maybe Paid Social
               WHEN a.medium = 'email' THEN 'email'
               WHEN a.medium = 'affiliate' THEN 'Affiliate'
               WHEN a.medium = 'referral' THEN 'Referral'
