@@ -26,3 +26,6 @@ library(stringr)
 
 # Load tibble for dataframe manipulation
 library(tibble)
+
+# Load Library for Adwords
+library(RAdwords)
