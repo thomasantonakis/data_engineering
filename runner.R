@@ -33,7 +33,6 @@ source('./salesforce.R')
 # we need to fetch the labels of the campaigns
 # We need to fetch the adgroup or ad api
 # and then the performance report from API.
-# find the most cost effective solution between GCS and BQ
 # source('~/adwords.R')
 
 # search console data
