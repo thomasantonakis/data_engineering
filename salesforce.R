@@ -52,10 +52,10 @@ query<-"select l.id as leadID , a.ID as accountID, l.FirstName, l.LastName, a.Na
                         date(a.CreatedDate) as AccCreateDate,
                         date(l.Date_d_intervention__c) as leadOperDate, 
                         date(l.DateDemande__c) as leadQueryDate,
-                        date(a.Date_d_intervention_compte__c) as AccdontKnow,
+                        date(a.Date_d_intervention_compte__c) as AccOperDate,
                         case when date(l.CreatedDate) is not null then 1 else 0 end as is_lead,
                         case when date(l.ConvertedDate) is not null then 1 else 0 end as has_conv_dt,
-                        case when date(a.Date_d_intervention_compte__c) is not null then 1 else 0 end as has_acc_create_dt,
+                        case when date(a.Date_d_intervention_compte__c) is not null then 1 else 0 end as has_acc_oper_dt,
                         case when date(l.Date_d_intervention__c) is not null then 1 else 0 end as has_oper_dt
         from `Lead.csv` as l
         LEFT JOIN `Account.csv` as a
@@ -66,7 +66,7 @@ salesforce<-sqldf(query)
 ###############################
 # Write a checker dataframe to check the correct movement of total metrics in the dashboard
 checker<-data.frame(leads = sum(salesforce$is_lead),
-                    conversions = sum(salesforce$has_oper_dt),
+                    conversions = sum(salesforce$has_acc_oper_dt),
                     price = sum(salesforce$Prix__c, na.rm = TRUE)
                     )
 
@@ -90,12 +90,13 @@ salesforce$leadOperDate<-as.Date(salesforce$leadOperDate)
 salesforce$leadQueryDate<-as.Date(salesforce$leadQueryDate)
 
 # Fix Unknown date
-salesforce$AccdontKnow<-as.Date(salesforce$AccdontKnow)
+salesforce$AccOperDate<-as.Date(salesforce$AccOperDate)
 
 # Find implausible rows
 salesforce$is_plausible <- !(( salesforce$leadCreateDate > salesforce$leadOperDate ) |
+                           ( salesforce$leadCreateDate > salesforce$AccOperDate) |
                            ( salesforce$leadCreateDate > salesforce$leadConvDate ) |
-                           ( salesforce$leadConvDate > salesforce$leadOperDate))
+                           ( salesforce$leadConvDate > salesforce$AccOperDate))
 # If it is not plausible, check if it one of the bulk conversions of October, and turn to plausible.
 salesforce$final <- salesforce$leadCreateDate <= '2017-10-15' | salesforce$is_plausible
 
@@ -142,7 +143,7 @@ if(file.exists('./files/salesforce.csv')){
 write.csv(x = salesforce, './files/salesforce.csv', row.names = F)
 
 # Upload to BQ
-move_to_bq<-'bq load --skip_leading_rows=1  --replace=true --source_format=CSV --null_marker="NA" initial.salesforce ./files/salesforce.csv leadID:string,accountID:string,FirstName:string,LastName:string,Name:string,LeadSource:string,status:string,convertedAccountID:string,desiredOperation:string,price:float,country:string,isCOnverted:integer,leadCreateDate:date,leadConvDate:date,accCreateDate:date,leadOperDate:date,leadQueryDate:date,AccIDNDate:date,is_lead:integer,has_conv_dt:integer,has_acc_create_dt:integer,has_oper_dt:integer,is_plausible:boolean,final:boolean'
+move_to_bq<-'bq load --skip_leading_rows=1  --replace=true --source_format=CSV --null_marker="NA" initial.salesforce ./files/salesforce.csv leadID:string,accountID:string,FirstName:string,LastName:string,Name:string,LeadSource:string,status:string,convertedAccountID:string,desiredOperation:string,price:float,country:string,isCOnverted:integer,leadCreateDate:date,leadConvDate:date,accCreateDate:date,leadOperDate:date,leadQueryDate:date,AccOperDate:date,is_lead:integer,has_conv_dt:integer,has_acc_oper_dt:integer,has_oper_dt:integer,is_plausible:boolean,final:boolean'
 # Execute the command
 system(move_to_bq)
 
