@@ -42,7 +42,7 @@ rm(list = names(empty)[empty])
 
 
 ###############################
-#############Test##################
+############ Test #############
 ###############################
 query<-"select l.id as leadID , a.ID as accountID, l.FirstName, l.LastName, a.Name, l.LeadSource, l.status, l.ConvertedAccountID, 
                         l.InterventionSouhaitee__c, l.Prix__c, l.Pays__c,
@@ -104,8 +104,6 @@ salesforce$final <- salesforce$leadCreateDate <= '2017-10-15' | salesforce$is_pl
 # We maybe should get provide pecial feeedback on those 34 cases so that they are corrected manually
 # implausible cases are listed in the second slide of the dashboard
 
-# Calculate legitimate days between operation and conversion
-
 # Sanitize the country
 salesforce$Pays__c[salesforce$Pays__c == 'France' |
                      salesforce$Pays__c == 'FRANCE'|
@@ -133,6 +131,8 @@ salesforce$Pays__c[salesforce$Pays__c == 'MAROC'|
 salesforce$Pays__c[grepl('union', salesforce$Pays__c, ignore.case = FALSE, perl = FALSE,
                          fixed = FALSE, useBytes = FALSE)]<- 'Ile de la Reunion'
 
+# Calculate legitimate days between operation and conversion
+salesforce$bto <- salesforce$AccOperDate - salesforce$AccCreateDate 
 
 # Actions per lead missing
 
@@ -143,7 +143,7 @@ if(file.exists('./files/salesforce.csv')){
 write.csv(x = salesforce, './files/salesforce.csv', row.names = F)
 
 # Upload to BQ
-move_to_bq<-'bq load --skip_leading_rows=1  --replace=true --source_format=CSV --null_marker="NA" initial.salesforce ./files/salesforce.csv leadID:string,accountID:string,FirstName:string,LastName:string,Name:string,LeadSource:string,status:string,convertedAccountID:string,desiredOperation:string,price:float,country:string,isCOnverted:integer,leadCreateDate:date,leadConvDate:date,accCreateDate:date,leadOperDate:date,leadQueryDate:date,AccOperDate:date,is_lead:integer,has_conv_dt:integer,has_acc_oper_dt:integer,has_oper_dt:integer,is_plausible:boolean,final:boolean'
+move_to_bq<-'bq load --skip_leading_rows=1  --replace=true --source_format=CSV --null_marker="NA" initial.salesforce ./files/salesforce.csv leadID:string,accountID:string,FirstName:string,LastName:string,Name:string,LeadSource:string,status:string,convertedAccountID:string,desiredOperation:string,price:float,country:string,isCOnverted:integer,leadCreateDate:date,leadConvDate:date,accCreateDate:date,leadOperDate:date,leadQueryDate:date,AccOperDate:date,is_lead:integer,has_conv_dt:integer,has_acc_oper_dt:integer,has_oper_dt:integer,is_plausible:boolean,final:boolean,bto:integer'
 # Execute the command
 system(move_to_bq)
 
