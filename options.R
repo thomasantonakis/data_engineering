@@ -15,7 +15,8 @@ scope<-c(
   "https://www.googleapis.com/auth/bigquery",
   "https://www.googleapis.com/auth/bigquery.insertdata",
   "https://www.googleapis.com/auth/drive",
-  "https://www.googleapis.com/auth/drive.readonly"
+  "https://www.googleapis.com/auth/drive.readonly",
+  "https://www.googleapis.com/auth/adwords"
 )
 
 # Pass this into the options
