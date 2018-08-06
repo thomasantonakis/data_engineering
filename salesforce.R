@@ -108,7 +108,10 @@ salesforce$final <- salesforce$leadCreateDate <= '2017-10-15' | salesforce$is_pl
 salesforce$Pays__c[salesforce$Pays__c == 'France' |
                      salesforce$Pays__c == 'FRANCE'|
                      salesforce$Pays__c == '30320 POULX'|
-                     salesforce$Pays__c == 'Fance' ]<- 'France'
+                     salesforce$Pays__c == 'Fance'|
+                     salesforce$Pays__c == 'saint etienne'|
+                     salesforce$Pays__c == 'liles'|
+                     salesforce$Pays__c == 'france']<- 'France'
 salesforce$Pays__c[salesforce$Pays__c == 'Belgique' |
                      salesforce$Pays__c == 'BELGIQUE'|
                      salesforce$Pays__c == 'Bruxelles'|
@@ -128,7 +131,9 @@ salesforce$Pays__c[salesforce$Pays__c == 'djibouti'|
                      salesforce$Pays__c == 'Djibouti' ]<- 'Djibouti'
 salesforce$Pays__c[salesforce$Pays__c == 'MAROC'|
                      salesforce$Pays__c == 'Maroc' ]<- 'Morocco'
-salesforce$Pays__c[grepl('union', salesforce$Pays__c, ignore.case = FALSE, perl = FALSE,
+salesforce$Pays__c[salesforce$Pays__c == 'Brasil'|salesforce$Pays__c == 'Brasil.'|salesforce$Pays__c == 'Brazil'|
+                     salesforce$Pays__c == 'Bresil'|salesforce$Pays__c == 'Brésil'|salesforce$Pays__c == 'Brιsil' ]<- 'Brésil'
+salesforce$Pays__c[grepl('union', salesforce$Pays__c, ignore.case = TRUE, perl = FALSE,
                          fixed = FALSE, useBytes = FALSE)]<- 'Ile de la Reunion'
 
 # Calculate legitimate days between operation and conversion
