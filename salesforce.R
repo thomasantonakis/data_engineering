@@ -150,7 +150,7 @@ if(file.exists('./files/salesforce.csv')){
 write.csv(x = salesforce, './files/salesforce.csv', row.names = F)
 
 # Upload to BQ
-move_to_bq<-'bq load --skip_leading_rows=1  --replace=true --source_format=CSV --null_marker="NA" initial.salesforce ./files/salesforce.csv leadID:string,accountID:string,FirstName:string,LastName:string,Name:string,LeadSource:string,status:string,convertedAccountID:string,desiredOperation:string,price:float,country:string,isCOnverted:integer,leadCreateDate:date,leadConvDate:date,accCreateDate:date,leadOperDate:date,leadQueryDate:date,AccOperDate:date,is_lead:integer,has_conv_dt:integer,has_acc_oper_dt:integer,has_oper_dt:integer,is_plausible:boolean,final:boolean,bto:integer'
+move_to_bq<-'bq load --skip_leading_rows=1  --replace=true --source_format=CSV --null_marker="NA" initial.salesforce ./files/salesforce.csv leadID:string,accountID:string,FirstName:string,LastName:string,Name:string,LeadSource:string,status:string,convertedAccountID:string,desiredOperation:string,price:float,country:string,isCOnverted:integer,leadCreateDate:date,leadConvDate:date,accCreateDate:date,leadOperDate:date,leadQueryDate:date,AccOperDate:date,is_lead:integer,has_conv_dt:integer,has_acc_oper_dt:integer,has_oper_dt:integer,uploaded_photo:boolean,is_plausible:boolean,final:boolean,bto:integer'
 # Execute the command
 system(move_to_bq)
 
