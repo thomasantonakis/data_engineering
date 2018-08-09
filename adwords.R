@@ -27,6 +27,56 @@ body2 <- statement(select=c('CampaignName','AdGroupName', 'Device', 'Date','Quer
                   start="2018-05-01",
                   end="2018-05-31")
 
+reyhoon_adgroup <- statement(select=c('CampaignID', 'CampaignName',
+                            'AccountDescriptiveName','CustomerDescriptiveName',
+                            'AdGroupId','AdGroupName', 
+                            'Device', 'Date',
+                            'AdRotationMode','BiddingStrategyName','BiddingStrategySource','BiddingStrategyType',
+                            'LabelIds', 'Labels','AdNetworkType1','AdNetworkType2',
+                            
+                            'Impressions','Clicks','Cost','AveragePosition','Conversions','ConversionValue',
+                            'AllConversions','AllConversionValue',
+                            'SearchImpressionShare', 'SearchRankLostImpressionShare'
+                            ),
+                   report="ADGROUP_PERFORMANCE_REPORT",
+                   # where="CampaignName STARTS_WITH 'A' AND Clicks > 100",
+                   start="2018-05-01",
+                   end="2018-05-31")
+
+# reyhoon_keywords <- statement(select=c(
+#                                       ),
+#                     report="?",
+#                     # where="CampaignName STARTS_WITH 'A' AND Clicks > 100",
+#                     start="2018-05-01",
+#                     end="2018-05-31")
+
+reyhoon_keywords_perf <- statement(select=c('ID','AccountCurrencyCode','CampaignId', 'CampaignName',
+                                            'AccountDescriptiveName','CustomerDescriptiveName',
+                                            'AdGroupId','AdGroupName', 
+                                            'Device', 'Date',
+                                            'BiddingStrategyName','BiddingStrategySource','BiddingStrategyType',
+                                            'CpcBidSource','CreativeQualityScore','Criteria', 'KeywordMatchType',
+                                            'IsNegative','PostClickQualityScore',
+                                            'TopOfPageCpc', 'FirstPageCpc','FirstPositionCpc',
+                                            'CpcBid','QualityScore',
+                                            'EstimatedAddCostAtFirstPositionCpc','EstimatedAddClicksAtFirstPositionCpc',
+                                            'HistoricalSearchPredictedCtr','ViewThroughConversions',
+                                            'Impressions','Clicks','Cost','AveragePosition','Conversions','ConversionValue',
+                                            'AllConversions','AllConversionValue',
+                                            'SearchImpressionShare', 'SearchRankLostImpressionShare'
+                                      ),
+                    report="KEYWORDS_PERFORMANCE_REPORT",
+                    # where="CampaignName STARTS_WITH 'A' AND Clicks > 100",
+                    start="2018-05-01",
+                    end="2018-05-31")
+
+# adwords query
+# DIM adgroup
+# DIM campaign
+# DIM client
+
+
+
 # What is needed is the map of ID and Keywords from the one report so that we can join them to the seconf report
 # Just search the report name to the adwords api docs so that we find out the proper names of the columns needed
 # Manipulation is needed afterqwards for formatting reasons
