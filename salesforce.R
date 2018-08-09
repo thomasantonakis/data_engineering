@@ -41,9 +41,9 @@ rm(list = names(empty)[empty])
 # https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/sforce_api_erd_majors.htm
 
 
-###############################
-############ Test #############
-###############################
+#Retrieve data from the csv's
+
+# We need to flag each lead depending on if it has uploaded anu photos
 query<-"select l.id as leadID , a.ID as accountID, l.FirstName, l.LastName, a.Name, l.LeadSource, l.status, l.ConvertedAccountID, 
                         l.InterventionSouhaitee__c, l.Prix__c, l.Pays__c,
                         l.IsConverted, 
@@ -56,7 +56,9 @@ query<-"select l.id as leadID , a.ID as accountID, l.FirstName, l.LastName, a.Na
                         case when date(l.CreatedDate) is not null then 1 else 0 end as is_lead,
                         case when date(l.ConvertedDate) is not null then 1 else 0 end as has_conv_dt,
                         case when date(a.Date_d_intervention_compte__c) is not null then 1 else 0 end as has_acc_oper_dt,
-                        case when date(l.Date_d_intervention__c) is not null then 1 else 0 end as has_oper_dt
+                        case when date(l.Date_d_intervention__c) is not null then 1 else 0 end as has_oper_dt,
+                        case when l.Photo_1__c = '' then 0 else 1 end as uploaded_photo
+                        -- link with COntentDocument and COntent Version to check if there are other files uploaded
         from `Lead.csv` as l
         LEFT JOIN `Account.csv` as a
         ON l.ConvertedAccountId = a.Id
