@@ -27,7 +27,7 @@ body2 <- statement(select=c('CampaignName','AdGroupName', 'Device', 'Date','Quer
                   start="2018-05-01",
                   end="2018-05-31")
 
-reyhoon_adgroup <- statement(select=c('CampaignID', 'CampaignName',
+reyhoon_adgroup <- statement(select=c('CampaignId', 'CampaignName',
                             'AccountDescriptiveName','CustomerDescriptiveName',
                             'AdGroupId','AdGroupName', 
                             'Device', 'Date',
@@ -43,14 +43,7 @@ reyhoon_adgroup <- statement(select=c('CampaignID', 'CampaignName',
                    start="2018-05-01",
                    end="2018-05-31")
 
-# reyhoon_keywords <- statement(select=c(
-#                                       ),
-#                     report="?",
-#                     # where="CampaignName STARTS_WITH 'A' AND Clicks > 100",
-#                     start="2018-05-01",
-#                     end="2018-05-31")
-
-reyhoon_keywords_perf <- statement(select=c('ID','AccountCurrencyCode','CampaignId', 'CampaignName',
+reyhoon_keywords_perf <- statement(select=c('Id','AccountCurrencyCode','CampaignId', 'CampaignName',
                                             'AccountDescriptiveName','CustomerDescriptiveName',
                                             'AdGroupId','AdGroupName', 
                                             'Device', 'Date',
@@ -70,7 +63,20 @@ reyhoon_keywords_perf <- statement(select=c('ID','AccountCurrencyCode','Campaign
                     start="2018-05-01",
                     end="2018-05-31")
 
-# adwords query
+
+reyhoon_query <- statement(select=c('KeywordId','AccountCurrencyCode','CampaignId', 'CampaignName',
+                                    'AccountDescriptiveName','CustomerDescriptiveName',
+                                    'AdGroupId','AdGroupName', 'Date',
+                                    'KeywordTextMatchingQuery',
+                                    'Query','QueryTargetingStatus',
+                                     
+                                    'Impressions','Clicks','Cost','Conversions','ConversionValue',
+                                    'AllConversions','AllConversionValue'
+),
+report="SEARCH_QUERY_PERFORMANCE_REPORT",
+# where="CampaignName STARTS_WITH 'A' AND Clicks > 100",
+start="2018-05-01",
+end="2018-05-31")
 # DIM adgroup
 # DIM campaign
 # DIM client
@@ -84,8 +90,9 @@ reyhoon_keywords_perf <- statement(select=c('ID','AccountCurrencyCode','Campaign
   
 # Pull data from Adwords
 # Check with UO
-adwords_keywords <- getData(clientCustomerId=adwordsCustomerID, google_auth=google_auth, statement=body1)
-adwords_search_term <- getData(clientCustomerId=adwordsCustomerID, google_auth=google_auth, statement=body2)
+adwords_adgroup <- getData(clientCustomerId=adwordsCustomerID, google_auth=google_auth, statement=reyhoon_adgroup)
+adwords_keywords <- getData(clientCustomerId=adwordsCustomerID, google_auth=google_auth, statement=reyhoon_keywords_perf)
+adwords_search_term <- getData(clientCustomerId=adwordsCustomerID, google_auth=google_auth, statement=reyhoon_query)
 
 # Alex says that we need :
 # Adgroup Performance without getting the conversion name and type
