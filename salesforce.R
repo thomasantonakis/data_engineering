@@ -44,7 +44,7 @@ rm(list = names(empty)[empty])
 #Retrieve data from the csv's
 
 # We need to flag each lead depending on if it has uploaded anu photos
-query<-"select l.id as leadID , a.ID as accountID, l.FirstName, l.LastName, a.Name, l.LeadSource, l.status, l.ConvertedAccountID, 
+query<-"SELECT l.id as leadID , a.ID as accountID, l.FirstName, l.LastName, a.Name, l.LeadSource, l.status, l.ConvertedAccountID, 
                         l.InterventionSouhaitee__c, l.Prix__c, l.Pays__c,
                         l.IsConverted, 
                         date(l.CreatedDate) as leadCreateDate,  
@@ -58,12 +58,39 @@ query<-"select l.id as leadID , a.ID as accountID, l.FirstName, l.LastName, a.Na
                         case when date(a.Date_d_intervention_compte__c) is not null then 1 else 0 end as has_acc_oper_dt,
                         case when date(l.Date_d_intervention__c) is not null then 1 else 0 end as has_oper_dt,
                         case when l.Photo_1__c = '' then 0 else 1 end as uploaded_photo
-                        -- link with COntentDocument and COntent Version to check if there are other files uploaded
-        from `Lead.csv` as l
+        FROM `Lead.csv` as l
         LEFT JOIN `Account.csv` as a
         ON l.ConvertedAccountId = a.Id
 "
 salesforce<-sqldf(query)
+# get how many photos has got uploaded
+photos<-sqldf("SELECT cdl.LinkedEntityId as leid, count(cv.ContentDocumentId) as follow_up_photo
+                      FROM `ContentDocumentLink.csv` as cdl
+              LEFT JOIN `ContentVersion.csv` as cv
+              ON cdl.ContentDocumentId = cv.ContentDocumentId
+              WHERE cv.IsLatest = 1
+              AND cv.FileType NOT IN ('UNKNOWN', 'SNOTE')
+              GROUP BY 1")
+# Join with how many photos are added afterwards
+salesforce<-sqldf("SELECT salesforce.*, photos.follow_up_photo
+                   FROM salesforce
+                   LEFT JOIN photos
+                   ON salesforce.leadID = photos.leid
+                   WHERE salesforce.has_conv_dt = 0
+                   UNION ALL 
+                   SELECT salesforce.*, photos.follow_up_photo
+                   FROM salesforce
+                   LEFT JOIN photos
+                   ON salesforce.ConvertedAccountID = photos.leid
+                   WHERE salesforce.has_conv_dt = 1")
+# Convert photos as boolean
+salesforce$follow_up_photo<-as.integer(!is.na(salesforce$follow_up_photo))
+# salesforce2$follow_up_photo<-as.integer(!is.na(salesforce2$follow_up_photo))
+# this needs to be checked as only 751 leads seem to have not null follow up photos 
+# but the photos are 831 rows long
+# there of 779 in leads and Accounts
+
+
 # write.csv(x = salesforce, file = './files/salesforce.csv',row.names = F)
 ###############################
 # Write a checker dataframe to check the correct movement of total metrics in the dashboard
@@ -150,7 +177,7 @@ if(file.exists('./files/salesforce.csv')){
 write.csv(x = salesforce, './files/salesforce.csv', row.names = F)
 
 # Upload to BQ
-move_to_bq<-'bq load --skip_leading_rows=1  --replace=true --source_format=CSV --null_marker="NA" initial.salesforce ./files/salesforce.csv leadID:string,accountID:string,FirstName:string,LastName:string,Name:string,LeadSource:string,status:string,convertedAccountID:string,desiredOperation:string,price:float,country:string,isCOnverted:integer,leadCreateDate:date,leadConvDate:date,accCreateDate:date,leadOperDate:date,leadQueryDate:date,AccOperDate:date,is_lead:integer,has_conv_dt:integer,has_acc_oper_dt:integer,has_oper_dt:integer,uploaded_photo:boolean,is_plausible:boolean,final:boolean,bto:integer'
+move_to_bq<-'bq load --skip_leading_rows=1  --replace=true --source_format=CSV --null_marker="NA" initial.salesforce ./files/salesforce.csv leadID:string,accountID:string,FirstName:string,LastName:string,Name:string,LeadSource:string,status:string,convertedAccountID:string,desiredOperation:string,price:float,country:string,isCOnverted:integer,leadCreateDate:date,leadConvDate:date,accCreateDate:date,leadOperDate:date,leadQueryDate:date,AccOperDate:date,is_lead:integer,has_conv_dt:integer,has_acc_oper_dt:integer,has_oper_dt:integer,uploaded_photo:integer,follow_up_photo:integer,is_plausible:boolean,final:boolean,bto:integer'
 # Execute the command
 system(move_to_bq)
 
